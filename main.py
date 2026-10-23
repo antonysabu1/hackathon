@@ -2,13 +2,33 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import database
+from pydantic import BaseModel
+from claude_integration import get_insight_from_claude, chat_about_lap
 from analysis import analyze_lap
-from claude_integration import get_insight_from_claude
 from parser import parse_assetto_corsa_telemetry
 from analysis import analyze_lap
 
 app = FastAPI()
+class ChatRequest(BaseModel):
+    question: str
 
+@app.post("/chat/{lap_id}")
+def chat(lap_id: int, reference_lap_id: int, request: ChatRequest):
+    your_lap = database.get_lap(lap_id)
+    ref_lap = database.get_lap(reference_lap_id)
+    if not your_lap or not ref_lap:
+        return {"error": "Lap not found"}
+
+    result = analyze_lap(your_lap["telemetry"], ref_lap["telemetry"])
+    parsed = parse_assetto_corsa_telemetry(your_lap["telemetry"])
+
+    answer = chat_about_lap(
+        request.question,
+        your_lap["lap_time"],
+        parsed["sectors"],
+        result["issues"]
+    )
+    return {"answer": answer}
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
