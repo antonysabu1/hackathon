@@ -50,6 +50,7 @@ def analyze_lap(your_telemetry, reference_telemetry):
         grid = np.arange(0, max_distance, step)
     else:
         grid = np.arange(buffer, max_distance - buffer, step)
+
     your_resampled = resample_by_distance(your_frames, your_distances, grid)
     ref_resampled = resample_by_distance(ref_frames, ref_distances, grid)
 
@@ -75,12 +76,8 @@ def analyze_lap(your_telemetry, reference_telemetry):
             })
 
     worst_issue = max(issues, key=lambda x: x["speed_delta"]) if issues else None
-
-    return {
-        "issues": issues,
-        "worst_issue": worst_issue,
-        "total_issues_found": len(issues)
-    }
+    top_issues = sorted(issues, key=lambda x: x["speed_delta"], reverse=True)[:5]
+    return {"issues": top_issues, "worst_issue": worst_issue, "total_issues_found": len(issues)}
 
 
 def classify_issue(your_point, ref_point, speed_delta, brake_delta, throttle_delta):
