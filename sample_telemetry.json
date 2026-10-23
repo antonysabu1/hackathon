@@ -1,0 +1,14 @@
+{
+  "lap_time": 92.456,
+  "frames": [
+    {"t": 0.0, "speed": 180, "throttle": 1.0, "brake": 0.0, "steering": 0.0, "gear": 5, "dt": 0.1},
+    {"t": 0.1, "speed": 175, "throttle": 0.8, "brake": 0.0, "steering": 0.1, "gear": 5, "dt": 0.1},
+    {"t": 0.2, "speed": 160, "throttle": 0.0, "brake": 0.9, "steering": 0.3, "gear": 4, "dt": 0.1},
+    {"t": 0.3, "speed": 120, "throttle": 0.0, "brake": 0.95, "steering": 0.5, "gear": 3, "dt": 0.1},
+    {"t": 0.4, "speed": 85, "throttle": 0.3, "brake": 0.0, "steering": 0.6, "gear": 2, "dt": 0.1},
+    {"t": 0.5, "speed": 95, "throttle": 0.6, "brake": 0.0, "steering": 0.4, "gear": 2, "dt": 0.1},
+    {"t": 0.6, "speed": 130, "throttle": 1.0, "brake": 0.0, "steering": 0.1, "gear": 3, "dt": 0.1},
+    {"t": 0.7, "speed": 170, "throttle": 1.0, "brake": 0.0, "steering": 0.0, "gear": 4, "dt": 0.1},
+    {"t": 0.8, "speed": 195, "throttle": 1.0, "brake": 0.0, "steering": 0.0, "gear": 5, "dt": 0.1}
+  ]
+}

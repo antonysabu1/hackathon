@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from anthropic import Anthropic
 
 client = Anthropic()
@@ -16,7 +19,7 @@ def get_insight_from_claude(lap_data, issue_data):
     """
     
     message = client.messages.create(
-        model="claude-sonnet-4-5",
+    model="claude-sonnet-5-5",
         max_tokens=100,
         messages=[
             {"role": "user", "content": prompt}

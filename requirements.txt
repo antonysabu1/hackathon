@@ -4,3 +4,4 @@ anthropic
 numpy
 pandas
 python-multipart
+python-dotenv
