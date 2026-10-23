@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+anthropic
+numpy
+pandas
+python-multipart
