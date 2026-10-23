@@ -2,6 +2,8 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import database
+from analysis import analyze_lap
+from claude_integration import get_insight_from_claude
 from parser import parse_assetto_corsa_telemetry
 from analysis import analyze_lap
 
@@ -51,6 +53,29 @@ def get_lap(lap_id: int):
 @app.get("/leaderboard")
 def leaderboard(limit: int = 10):
     return database.get_leaderboard(limit)
+
+@app.post("/analyze/{lap_id}")
+def analyze(lap_id: int, reference_lap_id: int):
+    your_lap = database.get_lap(lap_id)
+    ref_lap = database.get_lap(reference_lap_id)
+    
+    if not your_lap or not ref_lap:
+        return {"error": "Lap not found"}
+    
+    result = analyze_lap(your_lap["telemetry"], ref_lap["telemetry"])
+    
+    if result["worst_issue"]:
+        issue = result["worst_issue"]
+
+        coaching_text = get_insight_from_claude({}, {
+            "corner": f"{issue['distance_m']}m mark",
+            "issue": issue["issue_type"],
+            "their_speed": issue["your_speed"],
+            "ref_speed": issue["ref_speed"],
+            "speed_delta": issue["speed_delta"]
+        })
+        database.save_insight(lap_id, f"distance_{issue['distance_m']}m", issue["issue_type"], coaching_text)    
+    return result
 
 if __name__ == "__main__":
     import uvicorn
