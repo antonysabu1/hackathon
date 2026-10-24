@@ -142,8 +142,8 @@ Cause rules for more situations, grip usage, setup A against setup B, a driver f
 ## Team
 
 * Frontend, game recorder and coach: Siva Gireesh
-* Backend: teammate
+* Backend: Antony Sabu
 
 ## Credits
 
-Built with the Anthropic Claude API, FastAPI, React, Vite, and the Assetto Corsa shared memory interface.
+Built with the Anthropic Claude API, FastAPI, React, Vite, and the Assetto Corsa shared memory interface and telemetry data from public sources. 
