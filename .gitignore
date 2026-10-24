@@ -1,5 +1,8 @@
-__pycache__/
-*.pyc
-venv/
-racing_telemetry.db
 .env
+*.db
+__pycache__/
+.venv/
+venv/
+node_modules/
+dist/
+recorded_laps/

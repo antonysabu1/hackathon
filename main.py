@@ -2,15 +2,15 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import database
-from pydantic import BaseModel
-from claude_integration import get_insight_from_claude, chat_about_lap
 from analysis import analyze_lap
+from claude_integration import get_insight_from_claude
 from parser import parse_assetto_corsa_telemetry
 from analysis import analyze_lap
 
+from coach_profile import router as profile_router
+
 app = FastAPI()
-class ChatRequest(BaseModel):
-    question: str
+app.include_router(profile_router)  # <-- this line must be here, after app = FastAPI()
 
 @app.post("/chat/{lap_id}")
 def chat(lap_id: int, reference_lap_id: int, request: ChatRequest):
