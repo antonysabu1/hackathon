@@ -1,48 +1,39 @@
 # Apex Coach
 
-An AI coach for sim racers. It reads a lap, compares it with a reference, finds where the time went,
-names the cause in plain words, and tells you whether a snap or spin is your inputs or the car setup.
+An AI coach for sim racers. Upload your lap and a reference lap. The app shows where you lost speed,
+groups the problem spots into zones, and an AI coach explains the biggest one in plain words.
 
-## How it works
+## Parts
 
-1. **Parse**: `lap_io.py` reads a telemetry CSV (most export column names work).
-2. **Analyse**: `analysis.py` finds the corners, measures brake point, brake release, minimum speed,
-   throttle pickup, grip usage and counter steering, then diagnoses each corner with explainable rules.
-3. **Explain**: `chat.py` sends only the computed findings to Claude, which turns them into coaching.
-   The LLM never reads raw telemetry, so the numbers stay correct.
-4. **Show**: a React dashboard with linked charts, a ranked list of corner losses and a coach chat.
+| Part | Where | What it does |
+| --- | --- | --- |
+| Backend | repo root (`main.py`, `analysis.py`, `database.py`, `claude_integration.py`) | FastAPI. Stores laps in SQLite, compares your lap to a reference by distance, asks Claude for coaching |
+| Frontend | `frontend/` | React 18 + Vite. Charts, problem zones, coach panel, lap time leaderboard |
 
-Without an API key the chat falls back to a rule based coach, so the demo never breaks.
+## Run it (Windows PowerShell)
 
-## Tech stack
-
-| Layer | Choice |
-| --- | --- |
-| Backend | Python, FastAPI, NumPy, pandas, SQLite |
-| AI | Claude API for explanation, rule based diagnosis for the numbers |
-| Frontend | React 18, Vite, hand built SVG charts, plain CSS |
-
-## Run it on Windows (PowerShell)
-
-Install once: Python 3.11+ (tick "Add python.exe to PATH"), Node.js LTS, Git.
-
-**Terminal 1, backend**
+**1. Backend, from the repo root**
 
 ```powershell
-cd backend
-py -m venv .venv
-.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-copy .env.example .env
 notepad .env
-uvicorn main:app --reload --port 8000
 ```
 
-If Activate.ps1 is blocked, run `Set-ExecutionPolicy -Scope Process Bypass` first.
-In `.env`, paste your key after `ANTHROPIC_API_KEY=`. Never commit `.env` or share the key.
-You can skip the key to test, the app then uses the offline coach.
+Put this line in `.env`, using your own key, then save. Never commit `.env` or share the key:
 
-**Terminal 2, frontend**
+```
+ANTHROPIC_API_KEY=your-key-here
+```
+
+The backend will not start without a key, because it creates the Claude client when it loads.
+
+```powershell
+python -m uvicorn main:app --port 8000
+```
+
+Check http://127.0.0.1:8000/health shows `{"status":"ok"}`.
+
+**2. Frontend, in a second window**
 
 ```powershell
 cd frontend
@@ -50,37 +41,40 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173 and click **Try the sample lap**.
+If PowerShell blocks npm, run `Set-ExecutionPolicy -Scope Process Bypass` first.
+Open http://localhost:5173 and click **Try the demo laps**.
 
-Check the backend at http://127.0.0.1:8000/api/health
+## Backend endpoints used by the frontend
 
-## Using your own laps
+| Endpoint | Used for |
+| --- | --- |
+| `GET /health` | Status pill |
+| `POST /upload` (file, driver_name) | Save a lap, returns `lap_id`, `lap_time`, `sectors` |
+| `POST /analyze/{lap_id}?reference_lap_id=` | Find slow points, ask Claude, returns `issues`, `worst_issue` |
+| `GET /lap/{lap_id}` | Telemetry plus the saved coaching text (`insights`) |
+| `GET /leaderboard` | Lap times only |
 
-The sample is a synthetic lap with deliberate mistakes (early brake in T3, abrupt brake release and snap in T4,
-late throttle in T5, unused grip in T2). Assetto Corsa does not export CSV by itself. Tools like Content Manager,
-ACTI or MoTeC export laps to CSV. Needed columns: speed plus distance or time. Better: throttle, brake, steer, g_lat, g_lon.
-`python sample_data.py` writes example files into `backend/sample_laps/` showing the format.
+The Vite dev server forwards `/api/...` to the backend on port 8000.
 
-## What is built vs future work
+## Lap file format
 
-Built: upload, linked traces, corner detection, cause diagnosis, snap detection with driver vs setup reasoning,
-grip usage, projected gain range, coach chat.
+```json
+{ "lap_time": 92.456,
+  "frames": [ { "t": 0.0, "speed": 180, "throttle": 1.0, "brake": 0.0, "steering": 0.0, "gear": 5, "dt": 0.01 } ] }
+```
 
-Future work: live capture from the game, setup file parsing and A/B setup comparison, driver fingerprint across
-sessions, similar driver comparison, lap time only leaderboards with private telemetry, practice plans,
-more sims (iRacing, ACC, F1 25).
+Speed is in km/h. Both laps must be complete laps of the same track.
+The demo laps in `frontend/public/demo/` are synthetic, with deliberate mistakes.
 
-## Honest limits
+## Known limits
 
-* Cause rules are thresholds tuned on synthetic laps, they need validation on real laps.
-* The projected gain is an estimate shown as a range.
-* Setup advice is a list of experiments to try one at a time, not a guaranteed fix.
-* Grip usage is relative to the best grip seen across the two laps, not an absolute tyre limit.
+* A point is flagged when you are more than 15 km/h slower than the reference at the same distance.
+  Most flagged points are labelled "cause unclear", because the rules only compare pedal and steering values at that point.
+* Distance is integrated from speed, so small errors build up over a long lap.
+* The coach comments only on the single biggest gap.
+* `real_lap_1` to `real_lap_5.json` are slices of one long recording, not separate laps, so do not compare them with each other.
 
-## Questions judges may ask
+## Future work
 
-* **Why rules and not ML?** Rules are explainable and deterministic. We keep the LLM away from raw numbers
-  so it cannot invent telemetry. ML for driver profiling is the next step once we have user data.
-* **What is new?** Not the telemetry viewer, that exists. The new part is cause diagnosis, checking inputs before
-  blaming the setup, and verifying setup changes over several laps.
-* **Does it need the game?** No, it reads exported lap files.
+Corner detection and cause rules (early brake, late throttle, snap), grip usage, a chat with the coach,
+setup comparison, driver fingerprint, practice plans, live capture from the game, more sims.
