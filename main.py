@@ -12,23 +12,6 @@ from coach_profile import router as profile_router
 app = FastAPI()
 app.include_router(profile_router)  # <-- this line must be here, after app = FastAPI()
 
-@app.post("/chat/{lap_id}")
-def chat(lap_id: int, reference_lap_id: int, request: ChatRequest):
-    your_lap = database.get_lap(lap_id)
-    ref_lap = database.get_lap(reference_lap_id)
-    if not your_lap or not ref_lap:
-        return {"error": "Lap not found"}
-
-    result = analyze_lap(your_lap["telemetry"], ref_lap["telemetry"])
-    parsed = parse_assetto_corsa_telemetry(your_lap["telemetry"])
-
-    answer = chat_about_lap(
-        request.question,
-        your_lap["lap_time"],
-        parsed["sectors"],
-        result["issues"]
-    )
-    return {"answer": answer}
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
